@@ -6,17 +6,10 @@ import '../services/todo_service.dart';
 import '../widgets/filter_button.dart';
 import '../widgets/todo_item.dart';
 
-/// The main screen of the todo list application.
-///
-/// Manages todo list state including adding, toggling, deleting, and filtering todos.
 class TodoScreen extends StatefulWidget {
-  /// Callback to toggle between light and dark theme.
   final VoidCallback onThemeToggle;
-
-  /// Whether the app is currently in dark mode.
   final bool isDarkMode;
 
-  /// Creates a [TodoScreen].
   const TodoScreen({
     required this.onThemeToggle,
     required this.isDarkMode,
@@ -28,13 +21,9 @@ class TodoScreen extends StatefulWidget {
 }
 
 class _TodoScreenState extends State<TodoScreen> {
-  /// The list of all todos.
   final List<Todo> _todos = [];
-
-  /// Controller for the todo input field.
   late final TextEditingController _titleController;
 
-  /// The current active filter.
   FilterType _currentFilter = FilterType.all;
 
   @override
@@ -44,15 +33,14 @@ class _TodoScreenState extends State<TodoScreen> {
     _loadTodos();
   }
 
-  /// Loads todos from persistent storage.
   Future<void> _loadTodos() async {
     final loadedTodos = await TodoService.loadTodos();
     setState(() {
+      _todos.clear();
       _todos.addAll(loadedTodos);
     });
   }
 
-  /// Saves todos to persistent storage.
   Future<void> _saveTodos() async {
     await TodoService.saveTodos(_todos);
   }
@@ -63,9 +51,6 @@ class _TodoScreenState extends State<TodoScreen> {
     super.dispose();
   }
 
-  /// Adds a new todo to the list.
-  ///
-  /// Validates that the input is not empty and shows an error if needed.
   void _addTodo() {
     final title = _titleController.text.trim();
     if (title.isEmpty) {
@@ -76,12 +61,12 @@ class _TodoScreenState extends State<TodoScreen> {
     setState(() {
       _todos.add(Todo(id: DateTime.now().toString(), title: title));
     });
+
     _saveTodos();
     _titleController.clear();
     Navigator.pop(context);
   }
 
-  /// Toggles the completion status of a todo.
   void _toggleTodoCompletion(String todoId) {
     final index = _todos.indexWhere((todo) => todo.id == todoId);
     if (index != -1) {
@@ -94,7 +79,6 @@ class _TodoScreenState extends State<TodoScreen> {
     }
   }
 
-  /// Deletes a todo from the list.
   void _deleteTodo(String todoId) {
     setState(() {
       _todos.removeWhere((todo) => todo.id == todoId);
@@ -102,7 +86,6 @@ class _TodoScreenState extends State<TodoScreen> {
     _saveTodos();
   }
 
-  /// Clears all completed todos from the list.
   void _clearCompletedTodos() {
     setState(() {
       _todos.removeWhere((todo) => todo.isCompleted);
@@ -110,7 +93,6 @@ class _TodoScreenState extends State<TodoScreen> {
     _saveTodos();
   }
 
-  /// Returns a filtered list of todos based on the current filter.
   List<Todo> _getFilteredTodos() {
     switch (_currentFilter) {
       case FilterType.active:
@@ -122,14 +104,12 @@ class _TodoScreenState extends State<TodoScreen> {
     }
   }
 
-  /// Shows an error snack bar with the given message.
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  /// Gets the appropriate empty state message based on the current filter.
   String _getEmptyMessage() {
     switch (_currentFilter) {
       case FilterType.all:
@@ -141,10 +121,8 @@ class _TodoScreenState extends State<TodoScreen> {
     }
   }
 
-  /// Gets the count of active (not completed) todos.
   int get _activeCount => _todos.where((todo) => !todo.isCompleted).length;
 
-  /// Gets the count of completed todos.
   int get _completedCount => _todos.where((todo) => todo.isCompleted).length;
 
   @override
@@ -168,23 +146,37 @@ class _TodoScreenState extends State<TodoScreen> {
       ),
       body: Column(
         children: [
-          // Filter section
           _buildFilterSection(),
 
-          // Empty state or todo list
+          /// 🔥 Animated switch between empty state and list
           Expanded(
-            child: filteredTodos.isEmpty
-                ? Center(
-                    child: Text(
-                      _getEmptyMessage(),
-                      style: textTheme.bodyLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                : _buildTodoList(filteredTodos),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.05, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: filteredTodos.isEmpty
+                  ? Center(
+                      key: const ValueKey('empty'),
+                      child: Text(
+                        _getEmptyMessage(),
+                        style: textTheme.bodyLarge,
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  : _buildTodoList(filteredTodos),
+            ),
           ),
 
-          // Stats and clear completed button
           _buildStatsSection(),
         ],
       ),
@@ -195,53 +187,37 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
-  /// Shows a modal dialog centered on the screen for adding a new todo.
-  void _showAddTodoModal() {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Add a New Todo',
-                style: Theme.of(context).textTheme.titleLarge,
+  /// ✨ Animated List Items
+  Widget _buildTodoList(List<Todo> todos) {
+    return ListView.builder(
+      key: ValueKey(_currentFilter),
+      itemCount: todos.length,
+      itemBuilder: (context, index) {
+        final todo = todos[index];
+
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: Duration(milliseconds: 300 + (index * 50)),
+          curve: Curves.easeOut,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, 20 * (1 - value)),
+                child: child,
               ),
-              const SizedBox(height: AppConstants.defaultPadding),
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: AppConstants.hintText,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                      AppConstants.borderRadius,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.defaultPadding,
-                    vertical: AppConstants.mediumPadding,
-                  ),
-                ),
-                onSubmitted: (_) => _addTodo(),
-              ),
-              const SizedBox(height: AppConstants.defaultPadding),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _addTodo,
-                  child: const Text(AppConstants.addButtonLabel),
-                ),
-              ),
-            ],
+            );
+          },
+          child: TodoItem(
+            todo: todo,
+            onToggle: () => _toggleTodoCompletion(todo.id),
+            onDelete: () => _deleteTodo(todo.id),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  /// Builds the filter button section.
   Widget _buildFilterSection() {
     return Padding(
       padding: const EdgeInsets.symmetric(
@@ -273,10 +249,7 @@ class _TodoScreenState extends State<TodoScreen> {
               setState(() => _currentFilter = FilterType.completed);
             },
           ),
-
-          // Push Clear Completed to the right
           const Spacer(),
-
           if (_currentFilter == FilterType.completed && _completedCount > 0)
             TextButton.icon(
               onPressed: _clearCompletedTodos,
@@ -288,28 +261,53 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
-  /// Builds the todo list view.
-  Widget _buildTodoList(List<Todo> todos) {
-    return ListView.builder(
-      itemCount: todos.length,
-      itemBuilder: (context, index) {
-        final todo = todos[index];
-        return TodoItem(
-          todo: todo,
-          onToggle: () => _toggleTodoCompletion(todo.id),
-          onDelete: () => _deleteTodo(todo.id),
-        );
-      },
-    );
-  }
-
-  /// Builds the stats section showing counts.
   Widget _buildStatsSection() {
     return Padding(
       padding: const EdgeInsets.all(AppConstants.defaultPadding),
       child: Text(
         AppConstants.getStatsText(_activeCount, _completedCount),
         style: Theme.of(context).textTheme.bodySmall,
+      ),
+    );
+  }
+
+  void _showAddTodoModal() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.defaultPadding),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Add a New Todo',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: AppConstants.defaultPadding),
+              TextField(
+                controller: _titleController,
+                decoration: InputDecoration(
+                  hintText: AppConstants.hintText,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(
+                      AppConstants.borderRadius,
+                    ),
+                  ),
+                ),
+                onSubmitted: (_) => _addTodo(),
+              ),
+              const SizedBox(height: AppConstants.defaultPadding),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _addTodo,
+                  child: const Text(AppConstants.addButtonLabel),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
