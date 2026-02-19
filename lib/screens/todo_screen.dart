@@ -272,43 +272,79 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   void _showAddTodoModal() {
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => Dialog(
-        child: Padding(
-          padding: const EdgeInsets.all(AppConstants.defaultPadding),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Add a New Todo',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: AppConstants.defaultPadding),
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: AppConstants.hintText,
-                  border: OutlineInputBorder(
+      barrierDismissible: true,
+      barrierLabel: "Add Todo",
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return const SizedBox(); // Required but unused
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedValue = Curves.easeOutBack.transform(animation.value);
+
+        return Opacity(
+          opacity: animation.value,
+          child: Transform.scale(
+            scale: curvedValue,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                ), // 👈 side padding
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 500, // 👈 prevents stretching on large screens
+                  ),
+                  child: Material(
                     borderRadius: BorderRadius.circular(
                       AppConstants.borderRadius,
                     ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Padding(
+                      padding: const EdgeInsets.all(
+                        AppConstants.defaultPadding,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Add a New Todo',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: AppConstants.defaultPadding),
+                          TextField(
+                            controller: _titleController,
+                            autofocus: true,
+                            decoration: InputDecoration(
+                              hintText: AppConstants.hintText,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(
+                                  AppConstants.borderRadius,
+                                ),
+                              ),
+                            ),
+                            onSubmitted: (_) => _addTodo(),
+                          ),
+                          const SizedBox(height: AppConstants.defaultPadding),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _addTodo,
+                              child: const Text(AppConstants.addButtonLabel),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                onSubmitted: (_) => _addTodo(),
               ),
-              const SizedBox(height: AppConstants.defaultPadding),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _addTodo,
-                  child: const Text(AppConstants.addButtonLabel),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
