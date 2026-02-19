@@ -277,7 +277,7 @@ class _TodoScreenState extends State<TodoScreen> {
       barrierDismissible: true,
       barrierLabel: "Add Todo",
       barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 300),
+      transitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, animation, secondaryAnimation) {
         return const SizedBox(); // Required but unused
       },

@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Contains theme data for both light and dark modes with grayscale colors.
 class AppTheme {
-  AppTheme._(); // Private constructor to prevent instantiation
+  AppTheme._();
 
-  /// Light theme data with grayscale colors and black buttons.
+  static TextTheme _interTextTheme(Color color) {
+    return GoogleFonts.interTextTheme().apply(
+      bodyColor: color,
+      displayColor: color,
+    );
+  }
+
   static ThemeData get lightTheme {
     return ThemeData(
-      textTheme:
-          GoogleFonts.interTextTheme(), // Set the default font family to Inter
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: ColorScheme.fromSeed(
@@ -33,14 +36,12 @@ class AppTheme {
           foregroundColor: Colors.white,
         ),
       ),
+      textTheme: _interTextTheme(Colors.black),
     );
   }
 
-  /// Dark theme data with grayscale colors and white buttons.
   static ThemeData get darkTheme {
     return ThemeData(
-      textTheme:
-          GoogleFonts.interTextTheme(), // Set the default font family to Inter
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
@@ -64,6 +65,7 @@ class AppTheme {
           foregroundColor: Colors.black,
         ),
       ),
+      textTheme: _interTextTheme(Colors.white),
     );
   }
 }

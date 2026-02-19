@@ -27,7 +27,11 @@ class FilterButton extends StatelessWidget {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return FilterChip(
-      label: Text(label),
+      label: Text(
+        label,
+        softWrap: false, // or true if you want wrapping
+        overflow: TextOverflow.visible,
+      ),
       selected: isActive,
       onSelected: (_) => onPressed(),
       backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.grey.shade100,
