@@ -1,22 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import '../models/todo.dart';
 import '../constants/app_constants.dart';
 
-/// A widget that displays a single todo item in the list.
-///
-/// Shows the todo's completion status via checkbox, title with strikethrough
-/// for completed items, and a delete button.
 class TodoItem extends StatelessWidget {
-  /// The todo data to display.
   final Todo todo;
-
-  /// Callback when the todo's completion status is toggled.
   final VoidCallback onToggle;
-
-  /// Callback when the todo is deleted.
   final VoidCallback onDelete;
 
-  /// Creates a [TodoItem].
   const TodoItem({
     required this.todo,
     required this.onToggle,
@@ -36,23 +27,43 @@ class TodoItem extends StatelessWidget {
         vertical: AppConstants.smallPadding,
       ),
       child: Card(
-        child: ListTile(
-          leading: Checkbox(
-            value: todo.isCompleted,
-            onChanged: (_) => onToggle(),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+        ),
+        clipBehavior: Clip.antiAlias, // 👈 important
+        child: Slidable(
+          key: ValueKey(todo.id),
+          endActionPane: ActionPane(
+            motion: const DrawerMotion(),
+            extentRatio: 0.25,
+            children: [
+              // SlidableAction(
+              //   onPressed: (_) => onToggle(),
+              //   backgroundColor: Colors.blue,
+              //   foregroundColor: Colors.white,
+              //   icon: Icons.edit,
+              // ),
+              SlidableAction(
+                onPressed: (_) => onDelete(),
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                icon: Icons.delete_outline,
+              ),
+            ],
           ),
-          title: Text(
-            todo.title,
-            style: TextStyle(
-              decoration: todo.isCompleted
-                  ? TextDecoration.lineThrough
-                  : TextDecoration.none,
-              color: todo.isCompleted ? completedColor : textColor,
+          child: ListTile(
+            leading: Checkbox(
+              value: todo.isCompleted,
+              onChanged: (_) => onToggle(),
             ),
-          ),
-          trailing: IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            onPressed: onDelete,
+            title: Text(
+              todo.title,
+              style: TextStyle(
+                decoration: todo.isCompleted
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
+              ),
+            ),
           ),
         ),
       ),

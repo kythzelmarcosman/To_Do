@@ -64,7 +64,9 @@ class _TodoScreenState extends State<TodoScreen> {
 
     _saveTodos();
     _titleController.clear();
-    Navigator.pop(context);
+
+    // Remove focus from TextField
+    FocusScope.of(context).unfocus();
   }
 
   void _toggleTodoCompletion(String todoId) {
@@ -122,7 +124,6 @@ class _TodoScreenState extends State<TodoScreen> {
   }
 
   int get _activeCount => _todos.where((todo) => !todo.isCompleted).length;
-
   int get _completedCount => _todos.where((todo) => todo.isCompleted).length;
 
   @override
@@ -138,9 +139,6 @@ class _TodoScreenState extends State<TodoScreen> {
           IconButton(
             icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
             onPressed: widget.onThemeToggle,
-            tooltip: widget.isDarkMode
-                ? 'Switch to Light Mode'
-                : 'Switch to Dark Mode',
           ),
         ],
       ),
@@ -178,11 +176,10 @@ class _TodoScreenState extends State<TodoScreen> {
           ),
 
           _buildStatsSection(),
+
+          /// Bottom minimal add-todo bar
+          _buildAddTodoBar(),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTodoModal,
-        child: const Icon(Icons.add),
       ),
     );
   }
@@ -249,13 +246,6 @@ class _TodoScreenState extends State<TodoScreen> {
               setState(() => _currentFilter = FilterType.completed);
             },
           ),
-          const Spacer(),
-          if (_currentFilter == FilterType.completed && _completedCount > 0)
-            TextButton.icon(
-              onPressed: _clearCompletedTodos,
-              icon: const Icon(Icons.delete_outline, size: 18),
-              label: const Text(AppConstants.clearCompletedLabel),
-            ),
         ],
       ),
     );
@@ -271,80 +261,53 @@ class _TodoScreenState extends State<TodoScreen> {
     );
   }
 
-  void _showAddTodoModal() {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: "Add Todo",
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 400),
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return const SizedBox(); // Required but unused
-      },
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        final curvedValue = Curves.easeOutBack.transform(animation.value);
+  /// Minimal bottom bar to add todos
+  Widget _buildAddTodoBar() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-        return Opacity(
-          opacity: animation.value,
-          child: Transform.scale(
-            scale: curvedValue,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                ), // 👈 side padding
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 500, // 👈 prevents stretching on large screens
-                  ),
-                  child: Material(
-                    borderRadius: BorderRadius.circular(
-                      AppConstants.borderRadius,
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppConstants.defaultPadding,
+          vertical: AppConstants.smallPadding,
+        ),
+        color: isDarkMode ? Colors.black : Colors.white,
+        child: Row(
+          children: [
+            Expanded(
+              child: Material(
+                elevation: 2, // subtle shadow for floating effect
+                borderRadius: BorderRadius.circular(15),
+                color: isDarkMode ? Colors.grey.shade900 : Colors.grey.shade100,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      hintText: AppConstants.hintText,
+                      border: InputBorder.none, // remove default underline
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Padding(
-                      padding: const EdgeInsets.all(
-                        AppConstants.defaultPadding,
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Add a New Todo',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          const SizedBox(height: AppConstants.defaultPadding),
-                          TextField(
-                            controller: _titleController,
-                            autofocus: true,
-                            decoration: InputDecoration(
-                              hintText: AppConstants.hintText,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppConstants.borderRadius,
-                                ),
-                              ),
-                            ),
-                            onSubmitted: (_) => _addTodo(),
-                          ),
-                          const SizedBox(height: AppConstants.defaultPadding),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: _addTodo,
-                              child: const Text(AppConstants.addButtonLabel),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    onSubmitted: (_) => _addTodo(),
                   ),
                 ),
               ),
             ),
-          ),
-        );
-      },
+            const SizedBox(width: 8),
+            Material(
+              color: isDarkMode ? Colors.white : Colors.black,
+              shape: const CircleBorder(),
+              child: IconButton(
+                icon: Icon(
+                  Icons.add,
+                  color: isDarkMode ? Colors.black : Colors.white,
+                ),
+                onPressed: _addTodo,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
