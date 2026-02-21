@@ -2,9 +2,19 @@ import 'package:flutter/material.dart';
 import 'constants/app_constants.dart';
 import 'services/theme_service.dart';
 import 'theme/app_theme.dart';
-import 'screens/todo_screen.dart';
+import 'screens/task_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'models/task.dart';
+import 'models/todo.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+
+  Hive.registerAdapter(TaskAdapter());
+  Hive.registerAdapter(TodoAdapter());
+
+  await Hive.openBox<Task>('tasks');
   runApp(const MyApp());
 }
 
@@ -56,10 +66,7 @@ class _MyAppState extends State<MyApp> {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeMode,
-      home: TodoScreen(
-        onThemeToggle: _toggleThemeMode,
-        isDarkMode: _themeMode == ThemeMode.dark,
-      ),
+      home: TaskScreen(onThemeToggle: _toggleThemeMode),
     );
   }
 }

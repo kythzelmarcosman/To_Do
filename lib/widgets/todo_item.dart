@@ -17,9 +17,9 @@ class TodoItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDarkMode ? Colors.white : Colors.black;
-    final completedColor = isDarkMode ? Colors.grey.shade600 : Colors.grey;
+    // final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    // final textColor = isDarkMode ? Colors.white : Colors.black;
+    // final completedColor = isDarkMode ? Colors.grey.shade600 : Colors.grey;
 
     return Padding(
       padding: const EdgeInsets.symmetric(
